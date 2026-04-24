@@ -1,0 +1,62 @@
+key,English,Greek,Turkish
+app_title,Cyprus Solution Landscape Dashboard,Πίνακας Λύσεων Κυπριακού,Kıbrıs Çözüm Paneli
+app_subtitle,Longitudinal bicommunal findings on preferred political solutions,Διαχρονικά δικοινοτικά ευρήματα για προτιμώμενες πολιτικές λύσεις,Tercih edilen siyasi çözümlere ilişkin uzunlamasına iki toplumlu bulgular
+
+controls,Controls,Επιλογές,Kontroller
+display,Display,Προβολή,Görüntüleme
+desktop,Desktop,Υπολογιστής,Masaüstü
+mobile,Mobile,Κινητό,Mobil
+display_help,Use Mobile mode for smartphones. It avoids side-by-side charts and uses tabs instead.,Χρησιμοποιήστε την προβολή κινητού για smartphones. Αποφεύγει τα γραφήματα δίπλα-δίπλα και χρησιμοποιεί καρτέλες.,Mobil mod akıllı telefonlar içindir. Yan yana grafiklerden kaçınır ve sekmeler kullanır.
+
+community,Community,Κοινότητα,Toplum
+solution,Solution,Λύση,Çözüm
+view_mode,View mode,Τύπος προβολής,Görünüm
+
+both,Both,Και οι δύο,Her ikisi
+gc,Greek Cypriots,Ελληνοκύπριοι,Kıbrıslı Rumlar
+tc,Turkish Cypriots,Τουρκοκύπριοι,Kıbrıslı Türkler
+
+full_distribution,Full distribution,Πλήρης κατανομή,Tam dağılım
+accepted_rejected,Accepted vs Rejected,Αποδοχή vs Απόρριψη,Kabul vs Red
+
+accepted,Accepted,Αποδεκτό,Kabul
+rejected,Rejected,Απόρριψη,Red
+
+against,Against / Reject,Εναντίον / Απόρριψη,Karşı / Red
+tolerate,Tolerate,Ανοχή,Tolere
+in_favor,In favor,Υπέρ,Lehte
+
+bbf_support,Bizonal Bicommunal Federation,Διζωνική Δικοινοτική Ομοσπονδία,İki Bölgeli İki Toplumlu Federasyon
+unitary_state_support,Unitary State,Ενιαίο Κράτος,Üniter Devlet
+two_states_support,Two States,Δύο Κράτη,İki Devlet
+status_quo_support,Keeping the Status Quo,Διατήρηση του Στάτους Κβο,Statükonun Korunması
+
+method_data_label,Data,Δεδομένα,Veri
+method_data_text,Representative bicommunal surveys 2010–2025,Αντιπροσωπευτικές δικοινοτικές έρευνες 2010–2025,2010–2025 temsili iki toplumlu anketler
+
+method_measure_label,Measure,Μέτρηση,Ölçüm
+method_measure_text,Percent distribution across Against / Tolerate / In favor,Ποσοστιαία κατανομή σε Εναντίον / Ανοχή / Υπέρ,Karşı / Tolere / Lehte yüzdelik dağılımı
+
+method_derived_label,Derived indicator,Παράγωγος δείκτης,Türetilmiş gösterge
+method_derived_text,Accepted = In favor + Tolerate,Αποδεκτό = Υπέρ + Ανοχή,Kabul = Lehte + Tolere
+
+method_note_label,Note,Σημείωση,Not
+method_note_text,Tolerate means conditional acceptance not strong endorsement.,Η ανοχή σημαίνει υπό όρους αποδοχή όχι ισχυρή υποστήριξη.,Tolere koşullu kabul anlamına gelir güçlü destek değildir.
+
+accepted_info,Accepted = In favor + tolerate. Interpretation: referendum viability not strength of preference.,Αποδοχή = Υπέρ + Ανοχή. Ερμηνεία: βιωσιμότητα δημοψηφίσματος όχι ένταση προτίμησης.,Kabul = Lehte + Tolere. Yorum: referandum uygulanabilirliği tercih gücü değil.
+
+compare_solutions,Compare solutions by acceptance,Σύγκριση λύσεων με βάση την αποδοχή,Çözümleri kabul düzeyine göre karşılaştır
+
+maximum_possible_agreement,Maximum Possible Agreement (Joint Acceptance),Μέγιστη Δυνατή Συμφωνία (Κοινή Αποδοχή),Mümkün Olan En Yüksek Uzlaşma (Ortak Kabul)
+joint_acceptance,Joint acceptance,Κοινή αποδοχή,Ortak kabul
+
+joint_acceptance_note,Joint acceptance is the lower accepted percentage between Greek Cypriots and Turkish Cypriots for the same solution and year.,Η κοινή αποδοχή είναι το χαμηλότερο ποσοστό αποδοχής μεταξύ Ελληνοκυπρίων και Τουρκοκυπρίων για την ίδια λύση και χρονιά.,Ortak kabul aynı çözüm ve yıl için iki toplum arasındaki daha düşük kabul yüzdesidir.
+
+data_table,Data table,Πίνακας δεδομένων,Veri tablosu
+download_filtered,Download data,Λήψη δεδομένων,Veriyi indir
+
+percent,Percent,Ποσοστό,Yüzde
+year,Year,Έτος,Yıl
+category,Category,Κατηγορία,Kategori
+
+footer,Genetic Social Psychology Lab – University of Cyprus,Εργαστήριο Γενετικής Κοινωνικής Ψυχολογίας – Πανεπιστήμιο Κύπρου,Kıbrıs Üniversitesi Genetik Sosyal Psikoloji Laboratuvarı
