@@ -167,7 +167,7 @@ For collaboration, data access, or academic inquiries:
 
 🚀 Live App
 
-👉 (Add your Streamlit link here)
+👉 (https://cyprus-solution-landscape-ai-fqtppmt23fqxz93nq9dfre.streamlit.app/)
 
 🎯 Notes
 
