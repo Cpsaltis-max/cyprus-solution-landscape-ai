@@ -733,7 +733,7 @@ st.divider()
 AI_LABELS = {
     "English": {
         "title": "Ask the data and theory",
-        "intro": "Ask a question about the dashboard data and, where relevant, the theoretical interpretation from Conflict and Change.",
+        "intro": "Ask a question about the dashboard data and, where relevant, the theoretical interpretation from Book Psaltis, C. & Wagoner, B. (2025). Conflict and Change: Integrating Social and Developmental Psychology. Cambridge University Press",
         "mode": "Answer mode",
         "data_only": "Data only",
         "book_only": "Book only",
