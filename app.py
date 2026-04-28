@@ -733,50 +733,50 @@ st.divider()
 AI_LABELS = {
     "English": {
         "title": "Ask the data and theory",
-        "intro": "Ask a question about the dashboard data and, where relevant, the theoretical interpretation from Book Psaltis, C. & Wagoner, B. (2025). Conflict and Change: Integrating Social and Developmental Psychology. Cambridge University Press",
+        "intro": "Ask a question about the dashboard data and, where relevant, the theoretical interpretation from the indexed corpus of published papers by Charis Psaltis.",
         "mode": "Answer mode",
         "data_only": "Data only",
-        "book_only": "Book only",
-        "data_book": "Data + GSP-Βοοκ interpretation",
+        "book_only": "Published papers only",
+        "data_book": "Data + published papers interpretation",
         "question": "Your question",
         "placeholder": "Example: Which solution has the highest joint acceptance in 2025, and how can this be interpreted theoretically?",
         "button": "Ask Gemini",
         "missing": "Gemini is not configured yet. Add GEMINI_API_KEY and FILE_SEARCH_STORE_NAME to Streamlit secrets.",
         "no_question": "Please enter a question.",
         "answer": "Answer",
-        "with_book": "Theoretical grounding uses the indexed book store.",
+        "with_book": "Theoretical grounding uses the indexed published-paper corpus.",
         "package_missing": "The google-genai package is not installed. Add google-genai to requirements.txt.",
     },
     "Greek": {
         "title": "Ρώτησε τα δεδομένα και τη θεωρία",
-        "intro": "Κάντε ερώτηση για τα δεδομένα του πίνακα και, όπου είναι σχετικό, για τη θεωρητική ερμηνεία από το Βιβλίο Psaltis, C. & Wagoner, B. (2025). Conflict and Change: Integrating Social and Developmental Psychology. Cambridge University Press",
+        "intro": "Κάντε ερώτηση για τα δεδομένα του πίνακα και, όπου είναι σχετικό, για τη θεωρητική ερμηνεία από το ευρετηριασμένο σώμα δημοσιευμένων εργασιών του Charis Psaltis.",
         "mode": "Τύπος απάντησης",
         "data_only": "Μόνο δεδομένα",
-        "book_only": "Μόνο βιβλίο",
-        "data_book": "Δεδομένα + ερμηνεία ΓΚΨ-Βιβλίο",
+        "book_only": "Μόνο δημοσιευμένες εργασίες",
+        "data_book": "Δεδομένα + ερμηνεία από δημοσιευμένες εργασίες",
         "question": "Η ερώτησή σας",
         "placeholder": "Παράδειγμα: Ποια λύση έχει την υψηλότερη κοινή αποδοχή το 2025 και πώς ερμηνεύεται θεωρητικά;",
         "button": "Ρώτησε το Gemini",
         "missing": "Το Gemini δεν έχει ρυθμιστεί ακόμη. Προσθέστε GEMINI_API_KEY και FILE_SEARCH_STORE_NAME στα Streamlit secrets.",
         "no_question": "Παρακαλώ γράψτε μια ερώτηση.",
         "answer": "Απάντηση",
-        "with_book": "Η θεωρητική τεκμηρίωση χρησιμοποιεί το ευρετηριασμένο βιβλίο.",
+        "with_book": "Η θεωρητική τεκμηρίωση χρησιμοποιεί το ευρετηριασμένο σώμα δημοσιευμένων εργασιών.",
         "package_missing": "Το πακέτο google-genai δεν είναι εγκατεστημένο. Προσθέστε google-genai στο requirements.txt.",
     },
     "Turkish": {
         "title": "Veriye ve teoriye sor",
-        "intro": "Panel verileri hakkında ve ilgili olduğunda Psaltis, C. & Wagoner, B. (2025). Conflict and Change: Integrating Social and Developmental Psychology. Cambridge University Press kitabına dayalı teorik yorum hakkında soru sorun.",
+        "intro": "Panel verileri hakkında ve ilgili olduğunda Charis Psaltis'in indekslenmiş yayımlanmış makaleler bütününe dayalı teorik yorum hakkında soru sorun.",
         "mode": "Yanıt türü",
         "data_only": "Sadece veri",
-        "book_only": "Sadece kitap",
-        "data_book": "Veri + GSP-kitap yorumu",
+        "book_only": "Sadece yayımlanmış makaleler",
+        "data_book": "Veri + yayımlanmış makaleler yorumu",
         "question": "Sorunuz",
         "placeholder": "Örnek: 2025 yılında hangi çözüm en yüksek ortak kabule sahiptir ve bu teorik olarak nasıl yorumlanabilir?",
         "button": "Gemini'ye sor",
         "missing": "Gemini henüz yapılandırılmadı. Streamlit secrets içine GEMINI_API_KEY ve FILE_SEARCH_STORE_NAME ekleyin.",
         "no_question": "Lütfen bir soru girin.",
         "answer": "Yanıt",
-        "with_book": "Teorik temellendirme indekslenmiş kitap deposunu kullanır.",
+        "with_book": "Teorik temellendirme indekslenmiş yayımlanmış makaleler bütününü kullanır.",
         "package_missing": "google-genai paketi kurulu değil. requirements.txt dosyasına google-genai ekleyin.",
     },
 }
@@ -840,13 +840,14 @@ if st.button(L["button"]):
         if answer_mode == L["data_only"]:
             source_rule = """
 Use ONLY the dashboard dataset supplied below.
-Do not use the book or outside knowledge.
+Do not use the published-paper corpus or outside knowledge.
 """
             tools = None
         elif answer_mode == L["book_only"]:
             source_rule = """
-Use ONLY the retrieved passages from the indexed book Conflict and Change.
+Use ONLY the retrieved passages from the indexed corpus of published papers by Charis Psaltis.
 Do not use the dashboard dataset except to understand that the user is asking in the context of the Cyprus Solution Landscape Dashboard.
+When making a theoretical claim, identify the retrieved paper/source when available.
 Do not use outside knowledge.
 """
             tools = [
@@ -861,12 +862,13 @@ Do not use outside knowledge.
             source_rule = """
 Use BOTH:
 1. the dashboard dataset supplied below
-2. relevant retrieved passages from the indexed book Conflict and Change
+2. relevant retrieved passages from the indexed corpus of published papers by Charis Psaltis
 
 Clearly separate:
 - Empirical finding from the dashboard data
-- Theoretical interpretation from the book / Genetic Social Psychology
+- Theoretical interpretation from the published papers / Genetic Social Psychology
 
+When making a theoretical claim, identify the retrieved paper/source when available.
 Do not use outside knowledge.
 """
             tools = [
@@ -898,7 +900,7 @@ USER QUESTION:
 {question}
 """
 
-        with st.spinner("Gemini is analysing the dataset and book..."):
+        with st.spinner("Gemini is analysing the dataset and published papers..."):
             try:
                 if tools:
                     response = client.models.generate_content(
