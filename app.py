@@ -20,6 +20,9 @@ GEMINI_MODELS = [
     "gemini-flash-latest",
 ]
 
+PAPERS_FILE_SEARCH_SECRET = "FILE_SEARCH_STORE_NAME"
+BOOK_FILE_SEARCH_SECRET = "BOOK_FILE_SEARCH_STORE_NAME"
+
 
 def generate_with_fallbacks(client, prompt, tools):
     last_error = None
@@ -763,18 +766,18 @@ st.divider()
 AI_LABELS = {
     "English": {
         "title": "Ask the data and theory",
-        "intro": "Ask a question about the dashboard data and, where relevant, the theoretical interpretation from the indexed corpus of published papers by Charis Psaltis.",
+        "intro": "Ask a question about the dashboard data and, where relevant, the theoretical interpretation from the indexed papers and Conflict and Change.",
         "mode": "Answer mode",
         "data_only": "Data only",
-        "book_only": "Published papers only",
-        "data_book": "Data + published papers interpretation",
+        "book_only": "Papers + book only",
+        "data_book": "Data + papers + book interpretation",
         "question": "Your question",
         "placeholder": "Example: Which solution has the highest joint acceptance in 2025, and how can this be interpreted theoretically?",
         "button": "Ask Gemini",
-        "missing": "Gemini is not configured yet. Add GEMINI_API_KEY and FILE_SEARCH_STORE_NAME to Streamlit secrets.",
+        "missing": "Gemini is not configured yet. Add GEMINI_API_KEY, FILE_SEARCH_STORE_NAME, and BOOK_FILE_SEARCH_STORE_NAME to Streamlit secrets.",
         "no_question": "Please enter a question.",
         "answer": "Answer",
-        "with_book": "Theoretical grounding uses the indexed published-paper corpus.",
+        "with_book": "Theoretical grounding uses the indexed published-paper corpus and Conflict and Change.",
         "package_missing": "The google-genai package is not installed. Add google-genai to requirements.txt.",
     },
     "Greek": {
@@ -858,11 +861,17 @@ if st.button(L["button"]):
         st.warning(L["no_question"])
     elif genai is None or types is None:
         st.error(L["package_missing"])
-    elif "GEMINI_API_KEY" not in st.secrets or "FILE_SEARCH_STORE_NAME" not in st.secrets:
+    elif "GEMINI_API_KEY" not in st.secrets:
         st.error(L["missing"])
     else:
         api_key = st.secrets["GEMINI_API_KEY"]
-        file_search_store_name = st.secrets["FILE_SEARCH_STORE_NAME"]
+        papers_file_search_store_name = st.secrets.get(PAPERS_FILE_SEARCH_SECRET, "")
+        book_file_search_store_name = st.secrets.get(BOOK_FILE_SEARCH_SECRET, "")
+        theory_file_search_store_names = [
+            name
+            for name in [papers_file_search_store_name, book_file_search_store_name]
+            if name
+        ]
         client = genai.Client(api_key=api_key)
 
         data_context = build_ai_data_context()
@@ -870,20 +879,26 @@ if st.button(L["button"]):
         if answer_mode == L["data_only"]:
             source_rule = """
 Use ONLY the dashboard dataset supplied below.
-Do not use the published-paper corpus or outside knowledge.
+Do not use the published-paper corpus, the book, or outside knowledge.
 """
             tools = None
+        elif len(theory_file_search_store_names) < 2:
+            st.error(L["missing"])
+            st.stop()
         elif answer_mode == L["book_only"]:
             source_rule = """
-Use ONLY the retrieved passages from the indexed corpus of published papers by Charis Psaltis.
+Use ONLY the retrieved passages from:
+1. the indexed corpus of published papers by Charis Psaltis
+2. the indexed book Conflict and Change
+
 Do not use the dashboard dataset except to understand that the user is asking in the context of the Cyprus Solution Landscape Dashboard.
-When making a theoretical claim, identify the retrieved paper/source when available.
+When making a theoretical claim, identify the retrieved paper or book source when available.
 Do not use outside knowledge.
 """
             tools = [
                 types.Tool(
                     file_search=types.FileSearch(
-                        file_search_store_names=[file_search_store_name]
+                        file_search_store_names=theory_file_search_store_names
                     )
                 )
             ]
@@ -893,18 +908,19 @@ Do not use outside knowledge.
 Use BOTH:
 1. the dashboard dataset supplied below
 2. relevant retrieved passages from the indexed corpus of published papers by Charis Psaltis
+3. relevant retrieved passages from the indexed book Conflict and Change
 
 Clearly separate:
 - Empirical finding from the dashboard data
-- Theoretical interpretation from the published papers / Genetic Social Psychology
+- Theoretical interpretation from the published papers, Conflict and Change, and Genetic Social Psychology
 
-When making a theoretical claim, identify the retrieved paper/source when available.
+When making a theoretical claim, identify the retrieved paper or book source when available.
 Do not use outside knowledge.
 """
             tools = [
                 types.Tool(
                     file_search=types.FileSearch(
-                        file_search_store_names=[file_search_store_name]
+                        file_search_store_names=theory_file_search_store_names
                     )
                 )
             ]
@@ -930,7 +946,7 @@ USER QUESTION:
 {question}
 """
 
-        with st.spinner("Gemini is analysing the dataset and published papers..."):
+        with st.spinner("Gemini is analysing the dataset, papers, and book..."):
             try:
                 model_used, response = generate_with_fallbacks(client, prompt, tools)
 
