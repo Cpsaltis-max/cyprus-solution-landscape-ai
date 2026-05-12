@@ -13,6 +13,36 @@ except Exception:
     genai = None
     types = None
 
+GEMINI_MODELS = [
+    "gemini-2.5-flash-lite",
+    "gemini-2.5-flash",
+    "gemini-2.5-pro",
+    "gemini-flash-latest",
+]
+
+
+def generate_with_fallbacks(client, prompt, tools):
+    last_error = None
+
+    for model_name in GEMINI_MODELS:
+        try:
+            if tools:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(tools=tools),
+                )
+            else:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                )
+            return model_name, response
+        except Exception as exc:
+            last_error = exc
+
+    raise last_error
+
 
 # ============================================================
 # Page configuration
@@ -902,26 +932,20 @@ USER QUESTION:
 
         with st.spinner("Gemini is analysing the dataset and published papers..."):
             try:
-                if tools:
-                    response = client.models.generate_content(
-                        model="gemini-2.5-flash-lite",
-                        contents=prompt,
-                        config=types.GenerateContentConfig(tools=tools),
-                    )
-                else:
-                    response = client.models.generate_content(
-                        model="gemini-2.5-flash-lite",
-                        contents=prompt,
-                    )
+                model_used, response = generate_with_fallbacks(client, prompt, tools)
 
                 st.markdown(f"### {L['answer']}")
                 st.markdown(response.text)
+                st.caption(f"Model used: {model_used}")
 
                 if tools:
                     st.caption(L["with_book"])
 
             except Exception as e:
-                st.error("Gemini request failed.")
+                st.error(
+                    "Gemini request failed after trying these models: "
+                    + ", ".join(GEMINI_MODELS)
+                )
                 st.exception(e)
 
 
