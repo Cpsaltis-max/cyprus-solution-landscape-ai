@@ -93,7 +93,7 @@ The defaults can be changed for one PowerShell session:
 ```powershell
 $env:OLLAMA_CHAT_MODEL = "qwen3:14b"
 $env:OLLAMA_EMBED_MODEL = "bge-m3"
-$env:OLLAMA_NUM_CTX = "32768"
+$env:OLLAMA_NUM_CTX = "8192"
 $env:LOCAL_INDEX_PATH = "local_index/index.sqlite3"
 streamlit run app.py
 ```
