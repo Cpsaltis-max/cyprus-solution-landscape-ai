@@ -60,6 +60,12 @@ def _post_ollama(endpoint: str, payload: dict[str, Any], timeout: int = 300) -> 
     try:
         with request.urlopen(http_request, timeout=timeout) as response:
             return json.loads(response.read().decode("utf-8"))
+    except error.HTTPError as exc:
+        try:
+            detail = json.loads(exc.read().decode("utf-8")).get("error", str(exc))
+        except Exception:
+            detail = str(exc)
+        raise LocalAIError(f"Ollama rejected the request: {detail}") from exc
     except error.URLError as exc:
         raise LocalAIError(
             "Ollama could not be reached. Start Ollama and confirm that "
