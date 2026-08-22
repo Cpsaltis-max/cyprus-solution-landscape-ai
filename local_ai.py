@@ -219,7 +219,11 @@ def ask_local(
 You are the local AI interpretation assistant for the Cyprus Solution Landscape Dashboard.
 Use only the sources supplied in the user's message. Do not invent facts, years, percentages,
 sample sizes, causal claims, titles, or citations. If the available sources do not support an
-answer, say so clearly. Distinguish 'in favor' from 'accepted'; accepted = in_favor + tolerate.
+answer, say so clearly. Copy supplied numerical values exactly and check that joint acceptance
+equals the lower of GC and TC. Distinguish 'in favor' from 'accepted'; accepted = in_favor + tolerate.
+Use human-readable solution names: bbf_support = Bizonal Bicommunal Federation;
+unitary_state_support = Unitary State; two_states_support = Two States;
+status_quo_support = Status Quo.
 When using dashboard data, state the relevant year, community, solution, and percentage.
 When using retrieved scholarship, cite its SOURCE number and the displayed title/page.
 Answer in the same language as the question when possible. Give the answer, not private
@@ -242,9 +246,9 @@ QUESTION:
 
     chat_model = os.getenv("OLLAMA_CHAT_MODEL", DEFAULT_CHAT_MODEL)
     try:
-        context_window = int(os.getenv("OLLAMA_NUM_CTX", "32768"))
+        context_window = int(os.getenv("OLLAMA_NUM_CTX", "8192"))
     except ValueError:
-        context_window = 32768
+        context_window = 8192
 
     result = _post_ollama(
         "/api/chat",
@@ -255,7 +259,8 @@ QUESTION:
                 {"role": "user", "content": user_prompt},
             ],
             "stream": False,
-            "options": {"temperature": 0.1, "num_ctx": context_window},
+            "think": False,
+            "options": {"temperature": 0.0, "num_ctx": context_window},
         },
         timeout=600,
     )
@@ -264,10 +269,24 @@ QUESTION:
     if not answer:
         raise LocalAIError(f"Ollama model '{chat_model}' returned an empty answer.")
 
+    eval_duration = int(result.get("eval_duration") or 0)
+    eval_count = int(result.get("eval_count") or 0)
+
     return {
         "answer": answer,
         "model": chat_model,
         "embedding_model": os.getenv("OLLAMA_EMBED_MODEL", DEFAULT_EMBED_MODEL),
+        "performance": {
+            "total_seconds": int(result.get("total_duration") or 0) / 1_000_000_000,
+            "load_seconds": int(result.get("load_duration") or 0) / 1_000_000_000,
+            "prompt_tokens": int(result.get("prompt_eval_count") or 0),
+            "output_tokens": eval_count,
+            "tokens_per_second": (
+                eval_count / (eval_duration / 1_000_000_000)
+                if eval_duration
+                else None
+            ),
+        },
         "sources": [
             {
                 "citation": chunk.citation,
