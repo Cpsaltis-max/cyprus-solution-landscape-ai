@@ -853,6 +853,15 @@ LOCAL_PROVIDER_LABELS = {
 }
 P = LOCAL_PROVIDER_LABELS.get(language, LOCAL_PROVIDER_LABELS["English"])
 
+
+def get_streamlit_secret(name: str, default: str = "") -> str:
+    """Return a Streamlit secret without raising when no local secrets file exists."""
+    try:
+        return str(st.secrets.get(name, default))
+    except Exception:
+        return default
+
+
 st.subheader(L["title"])
 st.caption(L["intro"])
 
@@ -944,12 +953,12 @@ if st.button(ask_button_label):
             st.error(f"{P['failed']} {exc}")
     elif genai is None or types is None:
         st.error(L["package_missing"])
-    elif "GEMINI_API_KEY" not in st.secrets:
+    elif not get_streamlit_secret("GEMINI_API_KEY"):
         st.error(L["missing"])
     else:
-        api_key = st.secrets["GEMINI_API_KEY"]
-        papers_file_search_store_name = st.secrets.get(PAPERS_FILE_SEARCH_SECRET, "")
-        book_file_search_store_name = st.secrets.get(BOOK_FILE_SEARCH_SECRET, "")
+        api_key = get_streamlit_secret("GEMINI_API_KEY")
+        papers_file_search_store_name = get_streamlit_secret(PAPERS_FILE_SEARCH_SECRET)
+        book_file_search_store_name = get_streamlit_secret(BOOK_FILE_SEARCH_SECRET)
         theory_file_search_store_names = [
             name
             for name in [papers_file_search_store_name, book_file_search_store_name]
