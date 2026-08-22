@@ -14,7 +14,15 @@ are sent only to Ollama at `http://127.0.0.1:11434`. They are not sent to Gemini
 
 ## 1. Install the application
 
-Open PowerShell in the repository folder:
+Open PowerShell in the repository folder. The simplest setup is:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup_local_ai.ps1
+```
+
+The script creates a private Python environment, installs the requirements,
+creates the private folders, and downloads both Ollama models. Alternatively,
+the equivalent manual commands are:
 
 ```powershell
 git switch local-agent-experiment
@@ -66,6 +74,12 @@ after the new index has been completed successfully.
 
 ```powershell
 streamlit run app.py
+```
+
+Or use the included launcher:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\start_local_ai.ps1
 ```
 
 In **Ask the data and theory**, select **Local AI** and choose one of the three
