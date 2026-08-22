@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+
+# Private and generated local-AI material. Never commit the PDFs or index.
+private_corpus/
+local_index/
+
+# Local Streamlit credentials.
+.streamlit/secrets.toml
