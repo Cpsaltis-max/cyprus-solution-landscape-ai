@@ -816,8 +816,54 @@ AI_LABELS = {
 
 L = AI_LABELS.get(language, AI_LABELS["English"])
 
+LOCAL_PROVIDER_LABELS = {
+    "English": {
+        "provider": "AI provider",
+        "gemini": "Gemini (cloud)",
+        "local": "Local AI (Ollama)",
+        "local_note": "Local mode keeps questions, dashboard data, and retrieved passages on this computer.",
+        "button": "Ask Local AI",
+        "spinner": "The local model is analysing the available sources...",
+        "model_used": "Local model used",
+        "sources": "Retrieved paper and book sources",
+        "failed": "Local AI request failed:",
+    },
+    "Greek": {
+        "provider": "Πάροχος ΤΝ",
+        "gemini": "Gemini (νέφος)",
+        "local": "Τοπική ΤΝ (Ollama)",
+        "local_note": "Στην τοπική λειτουργία, οι ερωτήσεις, τα δεδομένα και τα ανακτημένα αποσπάσματα παραμένουν σε αυτόν τον υπολογιστή.",
+        "button": "Ρώτησε την Τοπική ΤΝ",
+        "spinner": "Το τοπικό μοντέλο αναλύει τις διαθέσιμες πηγές...",
+        "model_used": "Τοπικό μοντέλο",
+        "sources": "Ανακτημένες πηγές από άρθρα και βιβλίο",
+        "failed": "Αποτυχία αιτήματος προς την Τοπική ΤΝ:",
+    },
+    "Turkish": {
+        "provider": "Yapay zekâ sağlayıcısı",
+        "gemini": "Gemini (bulut)",
+        "local": "Yerel Yapay Zekâ (Ollama)",
+        "local_note": "Yerel modda sorular, panel verileri ve getirilen bölümler bu bilgisayarda kalır.",
+        "button": "Yerel Yapay Zekâya Sor",
+        "spinner": "Yerel model mevcut kaynakları analiz ediyor...",
+        "model_used": "Kullanılan yerel model",
+        "sources": "Getirilen makale ve kitap kaynakları",
+        "failed": "Yerel Yapay Zekâ isteği başarısız oldu:",
+    },
+}
+P = LOCAL_PROVIDER_LABELS.get(language, LOCAL_PROVIDER_LABELS["English"])
+
 st.subheader(L["title"])
 st.caption(L["intro"])
+
+answer_provider = st.radio(
+    P["provider"],
+    [P["gemini"], P["local"]],
+    horizontal=True,
+)
+
+if answer_provider == P["local"]:
+    st.caption(P["local_note"])
 
 
 def build_ai_data_context() -> str:
@@ -856,9 +902,46 @@ question = st.text_area(
     height=120,
 )
 
-if st.button(L["button"]):
+ask_button_label = L["button"] if answer_provider == P["gemini"] else P["button"]
+
+if st.button(ask_button_label):
     if not question.strip():
         st.warning(L["no_question"])
+    elif answer_provider == P["local"]:
+        if answer_mode == L["data_only"]:
+            local_mode = "data_only"
+            local_data_context = build_ai_data_context()
+        elif answer_mode == L["book_only"]:
+            local_mode = "theory_only"
+            local_data_context = ""
+        else:
+            local_mode = "combined"
+            local_data_context = build_ai_data_context()
+
+        try:
+            from local_ai import ask_local
+
+            with st.spinner(P["spinner"]):
+                local_result = ask_local(
+                    question=question,
+                    mode=local_mode,
+                    data_context=local_data_context,
+                )
+
+            st.markdown(f"### {L['answer']}")
+            st.markdown(local_result["answer"])
+            st.caption(f"{P['model_used']}: {local_result['model']}")
+
+            if local_result["sources"]:
+                with st.expander(P["sources"]):
+                    displayed_citations = set()
+                    for source in local_result["sources"]:
+                        citation = source["citation"]
+                        if citation not in displayed_citations:
+                            st.markdown(f"- {citation}")
+                            displayed_citations.add(citation)
+        except Exception as exc:
+            st.error(f"{P['failed']} {exc}")
     elif genai is None or types is None:
         st.error(L["package_missing"])
     elif "GEMINI_API_KEY" not in st.secrets:
