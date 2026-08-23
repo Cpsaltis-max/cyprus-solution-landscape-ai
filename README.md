@@ -8,7 +8,7 @@ This AI-enabled version integrates:
 📚 Theoretical interpretation grounded in Cambridge University Book by Psaltis & Wagoner (2025).
 Conflict and Change: Integrating Social and Developmental Psychology
 
-🤖 Gemini AI module for querying both data and theory
+🤖 OpenAI Responses API module for querying both data and theory
 
 🔍 Features
 Interactive visualisations of:
@@ -79,7 +79,7 @@ Joint acceptance:
 Minimum accepted level across both communities
 🤖 AI Module
 
-The AI component uses Google Gemini API with:
+The AI component uses the OpenAI Responses API with:
 
 Dataset grounding (structured CSV input)
 
@@ -157,7 +157,31 @@ indexed book content
 Streamlit
 Pandas
 Plotly
-Google Gemini API (RAG with File Search)
+OpenAI Responses API (RAG with File Search)
+
+## OpenAI corpus setup
+
+Keep the 45 papers and the searchable *Conflict and Change* PDF outside GitHub
+under `private_corpus/papers/` and `private_corpus/book/`. Set the API key for
+the current PowerShell session and build the OpenAI vector store once:
+
+```powershell
+$env:OPENAI_API_KEY = "your-key"
+python build_openai_index.py
+```
+
+The indexer uploads page-marked text, not repository files, so retrieved
+passages can retain their original PDF page number. When it finishes, add the
+printed values to Streamlit secrets:
+
+```toml
+OPENAI_API_KEY = "your-key"
+OPENAI_VECTOR_STORE_ID = "vs_..."
+OPENAI_MODEL = "gpt-5-mini"
+```
+
+Never commit the PDFs, `openai_index_manifest.json`, or
+`.streamlit/secrets.toml`.
 
 📬 Contact
 
