@@ -5,46 +5,13 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-# Gemini imports for the AI module.
+# OpenAI imports for the AI module.
 try:
-    from google import genai
-    from google.genai import types
+    from openai_ai import ask_openai
 except Exception:
-    genai = None
-    types = None
+    ask_openai = None
 
-GEMINI_MODELS = [
-    "gemini-2.5-flash-lite",
-    "gemini-2.5-flash",
-    "gemini-2.5-pro",
-    "gemini-flash-latest",
-]
-
-PAPERS_FILE_SEARCH_SECRET = "FILE_SEARCH_STORE_NAME"
-BOOK_FILE_SEARCH_SECRET = "BOOK_FILE_SEARCH_STORE_NAME"
-
-
-def generate_with_fallbacks(client, prompt, tools):
-    last_error = None
-
-    for model_name in GEMINI_MODELS:
-        try:
-            if tools:
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(tools=tools),
-                )
-            else:
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=prompt,
-                )
-            return model_name, response
-        except Exception as exc:
-            last_error = exc
-
-    raise last_error
+OPENAI_VECTOR_STORE_SECRET = "OPENAI_VECTOR_STORE_ID"
 
 
 # ============================================================
@@ -773,12 +740,14 @@ AI_LABELS = {
         "data_book": "Data + papers + book interpretation",
         "question": "Your question",
         "placeholder": "Example: Which solution has the highest joint acceptance in 2025, and how can this be interpreted theoretically?",
-        "button": "Ask Gemini",
-        "missing": "Gemini is not configured yet. Add GEMINI_API_KEY, FILE_SEARCH_STORE_NAME, and BOOK_FILE_SEARCH_STORE_NAME to Streamlit secrets.",
+        "button": "Ask OpenAI",
+        "missing": "OpenAI is not configured yet. Add OPENAI_API_KEY and OPENAI_VECTOR_STORE_ID to Streamlit secrets.",
         "no_question": "Please enter a question.",
         "answer": "Answer",
         "with_book": "Theoretical grounding uses the indexed published-paper corpus and Conflict and Change.",
-        "package_missing": "The google-genai package is not installed. Add google-genai to requirements.txt.",
+        "package_missing": "The openai package is not installed. Add openai to requirements.txt.",
+        "sources": "Retrieved paper and book sources",
+        "source_note": "These are the passages returned by OpenAI File Search. PDF page numbers come from page markers created during indexing.",
     },
     "Greek": {
         "title": "Ρώτησε τα δεδομένα και τη θεωρία",
@@ -789,12 +758,14 @@ AI_LABELS = {
         "data_book": "Δεδομένα + ερμηνεία από δημοσιευμένες εργασίες",
         "question": "Η ερώτησή σας",
         "placeholder": "Παράδειγμα: Ποια λύση έχει την υψηλότερη κοινή αποδοχή το 2025 και πώς ερμηνεύεται θεωρητικά;",
-        "button": "Ρώτησε το Gemini",
-        "missing": "Το Gemini δεν έχει ρυθμιστεί ακόμη. Προσθέστε GEMINI_API_KEY και FILE_SEARCH_STORE_NAME στα Streamlit secrets.",
+        "button": "Ρώτησε το OpenAI",
+        "missing": "Το OpenAI δεν έχει ρυθμιστεί ακόμη. Προσθέστε OPENAI_API_KEY και OPENAI_VECTOR_STORE_ID στα μυστικά του Streamlit.",
         "no_question": "Παρακαλώ γράψτε μια ερώτηση.",
         "answer": "Απάντηση",
         "with_book": "Η θεωρητική τεκμηρίωση χρησιμοποιεί το ευρετηριασμένο σώμα δημοσιευμένων εργασιών.",
-        "package_missing": "Το πακέτο google-genai δεν είναι εγκατεστημένο. Προσθέστε google-genai στο requirements.txt.",
+        "package_missing": "Το πακέτο openai δεν είναι εγκατεστημένο. Προσθέστε openai στο requirements.txt.",
+        "sources": "Ανακτημένες πηγές άρθρων και βιβλίου",
+        "source_note": "Αυτά είναι τα αποσπάσματα που επέστρεψε το OpenAI File Search.",
     },
     "Turkish": {
         "title": "Veriye ve teoriye sor",
@@ -805,12 +776,14 @@ AI_LABELS = {
         "data_book": "Veri + yayımlanmış makaleler yorumu",
         "question": "Sorunuz",
         "placeholder": "Örnek: 2025 yılında hangi çözüm en yüksek ortak kabule sahiptir ve bu teorik olarak nasıl yorumlanabilir?",
-        "button": "Gemini'ye sor",
-        "missing": "Gemini henüz yapılandırılmadı. Streamlit secrets içine GEMINI_API_KEY ve FILE_SEARCH_STORE_NAME ekleyin.",
+        "button": "OpenAI'ya sor",
+        "missing": "OpenAI henüz yapılandırılmadı. Streamlit secrets içine OPENAI_API_KEY ve OPENAI_VECTOR_STORE_ID ekleyin.",
         "no_question": "Lütfen bir soru girin.",
         "answer": "Yanıt",
         "with_book": "Teorik temellendirme indekslenmiş yayımlanmış makaleler bütününü kullanır.",
-        "package_missing": "google-genai paketi kurulu değil. requirements.txt dosyasına google-genai ekleyin.",
+        "package_missing": "openai paketi kurulu değil. requirements.txt dosyasına openai ekleyin.",
+        "sources": "Getirilen makale ve kitap kaynakları",
+        "source_note": "Bunlar OpenAI File Search tarafından getirilen bölümlerdir.",
     },
 }
 
@@ -821,7 +794,7 @@ st.caption(L["intro"])
 
 
 def build_ai_data_context() -> str:
-    """Build a compact but complete data context for Gemini."""
+    """Build a compact but complete data context for OpenAI."""
     raw_cols = ["year", "community", "variable", "response_category", "percent"]
     raw_data = df[raw_cols].sort_values(["variable", "community", "year", "response_category"])
 
@@ -859,109 +832,58 @@ question = st.text_area(
 if st.button(L["button"]):
     if not question.strip():
         st.warning(L["no_question"])
-    elif genai is None or types is None:
+    elif ask_openai is None:
         st.error(L["package_missing"])
-    elif "GEMINI_API_KEY" not in st.secrets:
+    elif "OPENAI_API_KEY" not in st.secrets:
         st.error(L["missing"])
     else:
-        api_key = st.secrets["GEMINI_API_KEY"]
-        papers_file_search_store_name = st.secrets.get(PAPERS_FILE_SEARCH_SECRET, "")
-        book_file_search_store_name = st.secrets.get(BOOK_FILE_SEARCH_SECRET, "")
-        theory_file_search_store_names = [
-            name
-            for name in [papers_file_search_store_name, book_file_search_store_name]
-            if name
-        ]
-        client = genai.Client(api_key=api_key)
-
-        data_context = build_ai_data_context()
-
         if answer_mode == L["data_only"]:
-            source_rule = """
-Use ONLY the dashboard dataset supplied below.
-Do not use the published-paper corpus, the book, or outside knowledge.
-"""
-            tools = None
-        elif len(theory_file_search_store_names) < 2:
+            openai_mode = "data_only"
+            data_context = build_ai_data_context()
+        elif not st.secrets.get(OPENAI_VECTOR_STORE_SECRET, ""):
             st.error(L["missing"])
             st.stop()
         elif answer_mode == L["book_only"]:
-            source_rule = """
-Use ONLY the retrieved passages from:
-1. the indexed corpus of published papers by Charis Psaltis
-2. the indexed book Conflict and Change
-
-Do not use the dashboard dataset except to understand that the user is asking in the context of the Cyprus Solution Landscape Dashboard.
-When making a theoretical claim, identify the retrieved paper or book source when available.
-Do not use outside knowledge.
-"""
-            tools = [
-                types.Tool(
-                    file_search=types.FileSearch(
-                        file_search_store_names=theory_file_search_store_names
-                    )
-                )
-            ]
+            openai_mode = "theory_only"
             data_context = "No dataset supplied in this mode."
         else:
-            source_rule = """
-Use BOTH:
-1. the dashboard dataset supplied below
-2. relevant retrieved passages from the indexed corpus of published papers by Charis Psaltis
-3. relevant retrieved passages from the indexed book Conflict and Change
+            openai_mode = "combined"
+            data_context = build_ai_data_context()
 
-Clearly separate:
-- Empirical finding from the dashboard data
-- Theoretical interpretation from the published papers, Conflict and Change, and Genetic Social Psychology
-
-When making a theoretical claim, identify the retrieved paper or book source when available.
-Do not use outside knowledge.
-"""
-            tools = [
-                types.Tool(
-                    file_search=types.FileSearch(
-                        file_search_store_names=theory_file_search_store_names
-                    )
-                )
-            ]
-
-        prompt = f"""
-You are the AI interpretation assistant for the Cyprus Solution Landscape Dashboard.
-
-STRICT RULES:
-{source_rule}
-
-Additional rules:
-- If the answer cannot be supported by the available sources, say so clearly.
-- Always mention relevant years, communities, solutions, and percentages when using the dataset.
-- Do not invent missing years, missing variables, causal claims, or sample sizes.
-- Distinguish "in favor" from "accepted"; accepted = in_favor + tolerate.
-- Keep the answer concise but analytically useful.
-- Answer in the same language as the user's question when possible.
-
-DASHBOARD DATA CONTEXT:
-{data_context}
-
-USER QUESTION:
-{question}
-"""
-
-        with st.spinner("Gemini is analysing the dataset, papers, and book..."):
+        with st.spinner("OpenAI is analysing the available data and indexed sources..."):
             try:
-                model_used, response = generate_with_fallbacks(client, prompt, tools)
+                result = ask_openai(
+                    question=question,
+                    mode=openai_mode,
+                    data_context=data_context,
+                    api_key=str(st.secrets["OPENAI_API_KEY"]),
+                    vector_store_id=str(st.secrets.get(OPENAI_VECTOR_STORE_SECRET, "")),
+                    model=str(st.secrets.get("OPENAI_MODEL", "gpt-5-mini")),
+                )
 
                 st.markdown(f"### {L['answer']}")
-                st.markdown(response.text)
-                st.caption(f"Model used: {model_used}")
+                st.markdown(result["answer"])
+                performance = result.get("performance", {})
+                st.caption(
+                    f"Model used: {result['model']} · "
+                    f"Response time: {performance.get('total_seconds', 0):.1f} seconds"
+                )
 
-                if tools:
+                if result["sources"]:
                     st.caption(L["with_book"])
+                    with st.expander(L["sources"]):
+                        st.caption(L["source_note"])
+                        for source in result["sources"]:
+                            st.markdown(f"**SOURCE {source['source_number']} — {source['citation']}**")
+                            if source.get("excerpt"):
+                                quoted = source["excerpt"].replace("\n", "\n> ")
+                                st.markdown(f"> {quoted}")
+                            score = source.get("score")
+                            if isinstance(score, (int, float)):
+                                st.caption(f"Retrieval score: {score:.3f}")
 
             except Exception as e:
-                st.error(
-                    "Gemini request failed after trying these models: "
-                    + ", ".join(GEMINI_MODELS)
-                )
+                st.error("OpenAI request failed.")
                 st.exception(e)
 
 
