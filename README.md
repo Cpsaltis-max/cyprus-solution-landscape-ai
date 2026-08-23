@@ -8,7 +8,7 @@ This AI-enabled version integrates:
 📚 Theoretical interpretation grounded in Cambridge University Book by Psaltis & Wagoner (2025).
 Conflict and Change: Integrating Social and Developmental Psychology
 
-🤖 Gemini AI module for querying both data and theory
+🤖 OpenAI Responses API module for querying both data and theory
 
 🔍 Features
 Interactive visualisations of:
@@ -79,7 +79,7 @@ Joint acceptance:
 Minimum accepted level across both communities
 🤖 AI Module
 
-The AI component uses Google Gemini API with:
+The AI component uses the OpenAI Responses API with:
 
 Dataset grounding (structured CSV input)
 
@@ -157,7 +157,7 @@ indexed book content
 Streamlit
 Pandas
 Plotly
-Google Gemini API (RAG with File Search)
+OpenAI Responses API (RAG with File Search)
 
 📬 Contact
 
