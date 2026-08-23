@@ -65,10 +65,13 @@ python build_local_index.py
 ```
 
 The command searches all subfolders, extracts page text, creates embeddings,
-and writes `local_index/index.sqlite3`. It also writes
-`local_index/index_report.json`, identifying pages with little extractable text
-that may require OCR. Rebuilding is safe: the existing index is replaced only
-after the new index has been completed successfully.
+and writes `local_index/index.sqlite3`. Each page is first read with pypdf. If
+missing-font boxes, replacement characters, or unusually little text are
+detected, the page is independently re-read with PyMuPDF and the demonstrably
+better extraction is used. The generated `local_index/index_report.json`
+separately lists pages repaired by the fallback and pages that still require
+OCR. Rebuilding is safe: the existing index is replaced only after the new
+index has been completed successfully.
 
 ## 4. Run the dashboard
 
