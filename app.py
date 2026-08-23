@@ -1,10 +1,17 @@
 import base64
 from pathlib import Path
 import re
+import time
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+
+from evaluation import (
+    BENCHMARK_QUESTIONS,
+    render_evaluation_panel,
+    set_evaluation_candidate,
+)
 
 # Gemini imports for the AI module.
 try:
@@ -992,11 +999,49 @@ answer_mode = st.radio(
 if answer_provider == P["local"] and answer_mode == L["data_book"]:
     st.info(P["combined_note"])
 
-question = st.text_area(
-    L["question"],
-    placeholder=L["placeholder"],
-    height=120,
+evaluation_enabled = st.checkbox(
+    "Benchmark evaluation mode",
+    help=(
+        "Use a fixed research question, capture model and timing information, "
+        "rate the answer, and export the comparison as CSV."
+    ),
 )
+
+selected_benchmark = {
+    "id": "MANUAL",
+    "domain": "Manual question",
+    "recommended_mode": "",
+    "question": "",
+}
+
+if evaluation_enabled:
+    selected_index = st.selectbox(
+        "Benchmark question",
+        options=range(len(BENCHMARK_QUESTIONS)),
+        format_func=lambda index: (
+            f"{BENCHMARK_QUESTIONS[index]['id']} — "
+            f"{BENCHMARK_QUESTIONS[index]['domain']}"
+        ),
+    )
+    selected_benchmark = BENCHMARK_QUESTIONS[selected_index]
+    st.caption(
+        f"Recommended answer mode: {selected_benchmark['recommended_mode']}"
+    )
+    question = st.text_area(
+        L["question"],
+        value=selected_benchmark["question"],
+        height=160,
+        key=f"benchmark_question_{selected_benchmark['id']}",
+    )
+else:
+    question = st.text_area(
+        L["question"],
+        placeholder=L["placeholder"],
+        height=120,
+        key="manual_ai_question",
+    )
+
+benchmark_for_run = {**selected_benchmark, "question": question}
 
 ask_button_label = L["button"] if answer_provider == P["gemini"] else P["button"]
 
@@ -1050,6 +1095,19 @@ if st.button(ask_button_label):
                             f"Type: {source['document_type']} · "
                             f"Retrieval score: {source['score']:.3f}"
                         )
+
+            if evaluation_enabled:
+                set_evaluation_candidate(
+                    benchmark=benchmark_for_run,
+                    provider=P["local"],
+                    answer_mode=answer_mode,
+                    model=local_result["model"],
+                    answer=local_result["answer"],
+                    response_seconds=performance.get("total_seconds"),
+                    prompt_tokens=performance.get("prompt_tokens"),
+                    output_tokens=performance.get("output_tokens"),
+                    sources=local_result["sources"],
+                )
         except Exception as exc:
             st.error(f"{P['failed']} {exc}")
     elif genai is None or types is None:
@@ -1141,7 +1199,9 @@ USER QUESTION:
 
         with st.spinner("Gemini is analysing the dataset, papers, and book..."):
             try:
+                gemini_started = time.perf_counter()
                 model_used, response = generate_with_fallbacks(client, prompt, tools)
+                gemini_seconds = time.perf_counter() - gemini_started
 
                 st.markdown(f"### {L['answer']}")
                 st.markdown(response.text)
@@ -1150,12 +1210,26 @@ USER QUESTION:
                 if tools:
                     st.caption(L["with_book"])
 
+                if evaluation_enabled:
+                    set_evaluation_candidate(
+                        benchmark=benchmark_for_run,
+                        provider=P["gemini"],
+                        answer_mode=answer_mode,
+                        model=model_used,
+                        answer=response.text,
+                        response_seconds=gemini_seconds,
+                        sources=[],
+                    )
+
             except Exception as e:
                 st.error(
                     "Gemini request failed after trying these models: "
                     + ", ".join(GEMINI_MODELS)
                 )
                 st.exception(e)
+
+if evaluation_enabled:
+    render_evaluation_panel()
 
 
 # ============================================================
