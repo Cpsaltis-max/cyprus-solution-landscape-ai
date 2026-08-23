@@ -41,7 +41,7 @@ class RetrievedChunk:
     @property
     def citation(self) -> str:
         year = f" ({self.year})" if self.year else ""
-        return f"{self.title}{year}, p. {self.page_number}"
+        return f"{self.title}{year}, PDF p. {self.page_number}"
 
 
 def _ollama_url() -> str:
@@ -101,7 +101,7 @@ def retrieve_chunks(
     question: str,
     *,
     index_path: Path | str | None = None,
-    top_k: int = 8,
+    top_k: int = 5,
     maximum_per_document: int = 2,
 ) -> list[RetrievedChunk]:
     """Retrieve semantically relevant passages with basic source diversity."""
@@ -225,7 +225,10 @@ Use human-readable solution names: bbf_support = Bizonal Bicommunal Federation;
 unitary_state_support = Unitary State; two_states_support = Two States;
 status_quo_support = Status Quo.
 When using dashboard data, state the relevant year, community, solution, and percentage.
-When using retrieved scholarship, cite its SOURCE number and the displayed title/page.
+For every scholarship claim, cite the exact bracketed source label supplied in the form
+[SOURCE N: title, PDF p. X]. Never cite a SOURCE number without that source's title and
+PDF page. Do not introduce an author, date, study, or finding unless it appears in a supplied
+source label or passage. If passages disagree or provide insufficient evidence, say so.
 Answer in the same language as the question when possible. Give the answer, not private
 chain-of-thought reasoning.
 """.strip()
@@ -289,13 +292,15 @@ QUESTION:
         },
         "sources": [
             {
+                "source_number": number,
                 "citation": chunk.citation,
                 "title": chunk.title,
                 "year": chunk.year,
                 "page": chunk.page_number,
                 "document_type": chunk.document_type,
                 "score": chunk.score,
+                "excerpt": chunk.text[:700].strip(),
             }
-            for chunk in chunks
+            for number, chunk in enumerate(chunks, start=1)
         ],
     }
