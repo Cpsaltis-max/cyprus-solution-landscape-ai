@@ -89,6 +89,19 @@ In **Ask the data and theory**, select **Local AI** and choose one of the three
 existing answer modes. Gemini continues to require the existing Streamlit
 secrets; Local AI does not require an API key.
 
+## Benchmark evaluation
+
+Enable **Benchmark evaluation mode** to select one of ten fixed questions
+covering contact, trust and threat, collective memory, social representations,
+history teaching, transitional justice, identity, Genetic Social Psychology,
+and data–theory integration. After an answer is generated, rate accuracy,
+source relevance, citation support, and completeness on 1–5 scales. Model,
+timing, token, answer, and source information are captured automatically.
+
+Evaluation records remain only in the current Streamlit browser session. Use
+**Download evaluation CSV** before closing the session. Run the same benchmark
+question with Local AI and Gemini to create directly comparable records.
+
 ## Optional model settings
 
 The defaults can be changed for one PowerShell session:
