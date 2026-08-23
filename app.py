@@ -827,6 +827,8 @@ LOCAL_PROVIDER_LABELS = {
         "spinner": "The local model is analysing the available sources...",
         "model_used": "Local model used",
         "sources": "Retrieved paper and book sources",
+        "source_note": "Source numbers below map exactly to the SOURCE labels in the answer. Page numbers refer to pages in the indexed PDF and may differ from the publication's printed pagination.",
+        "combined_note": "Combined mode includes dashboard tables and is slower. For a question about scholarship without survey figures, choose ‘Papers + book only’.",
         "failed": "Local AI request failed:",
     },
     "Greek": {
@@ -838,6 +840,8 @@ LOCAL_PROVIDER_LABELS = {
         "spinner": "Το τοπικό μοντέλο αναλύει τις διαθέσιμες πηγές...",
         "model_used": "Τοπικό μοντέλο",
         "sources": "Ανακτημένες πηγές από άρθρα και βιβλίο",
+        "source_note": "Οι αριθμοί πηγών αντιστοιχούν ακριβώς στις ενδείξεις SOURCE της απάντησης. Οι αριθμοί σελίδων αφορούν το ευρετηριασμένο PDF και μπορεί να διαφέρουν από την έντυπη σελιδαρίθμηση.",
+        "combined_note": "Η συνδυασμένη λειτουργία περιλαμβάνει τους πίνακες δεδομένων και είναι πιο αργή. Για ερώτηση μόνο για τη βιβλιογραφία, επιλέξτε «Μόνο δημοσιευμένες εργασίες».",
         "failed": "Αποτυχία αιτήματος προς την Τοπική ΤΝ:",
     },
     "Turkish": {
@@ -849,6 +853,8 @@ LOCAL_PROVIDER_LABELS = {
         "spinner": "Yerel model mevcut kaynakları analiz ediyor...",
         "model_used": "Kullanılan yerel model",
         "sources": "Getirilen makale ve kitap kaynakları",
+        "source_note": "Aşağıdaki kaynak numaraları yanıttaki SOURCE etiketleriyle tam olarak eşleşir. Sayfa numaraları indekslenen PDF'ye aittir ve basılı yayının sayfalarından farklı olabilir.",
+        "combined_note": "Birleşik mod veri tablolarını da içerdiği için daha yavaştır. Anket rakamları gerektirmeyen akademik sorular için yalnızca makale ve kitap modunu seçin.",
         "failed": "Yerel Yapay Zekâ isteği başarısız oldu:",
     },
 }
@@ -983,6 +989,9 @@ answer_mode = st.radio(
     horizontal=True,
 )
 
+if answer_provider == P["local"] and answer_mode == L["data_book"]:
+    st.info(P["combined_note"])
+
 question = st.text_area(
     L["question"],
     placeholder=L["placeholder"],
@@ -1028,12 +1037,19 @@ if st.button(ask_button_label):
 
             if local_result["sources"]:
                 with st.expander(P["sources"]):
-                    displayed_citations = set()
+                    st.caption(P["source_note"])
                     for source in local_result["sources"]:
+                        source_number = source["source_number"]
                         citation = source["citation"]
-                        if citation not in displayed_citations:
-                            st.markdown(f"- {citation}")
-                            displayed_citations.add(citation)
+                        st.markdown(f"**SOURCE {source_number} — {citation}**")
+                        excerpt = source.get("excerpt", "").strip()
+                        if excerpt:
+                            quoted_excerpt = excerpt.replace("\n", "\n> ")
+                            st.markdown(f"> {quoted_excerpt}")
+                        st.caption(
+                            f"Type: {source['document_type']} · "
+                            f"Retrieval score: {source['score']:.3f}"
+                        )
         except Exception as exc:
             st.error(f"{P['failed']} {exc}")
     elif genai is None or types is None:
