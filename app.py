@@ -1,5 +1,6 @@
 import base64
 from pathlib import Path
+import re
 
 import pandas as pd
 import plotly.express as px
@@ -793,27 +794,104 @@ st.subheader(L["title"])
 st.caption(L["intro"])
 
 
-def build_ai_data_context() -> str:
-    """Build a compact but complete data context for OpenAI."""
+def build_ai_data_context(user_question: str = "") -> str:
+    """Build a compact, question-aware and numerically authoritative data context."""
     raw_cols = ["year", "community", "variable", "response_category", "percent"]
-    raw_data = df[raw_cols].sort_values(["variable", "community", "year", "response_category"])
+    raw_data = df[raw_cols].sort_values(
+        ["variable", "community", "year", "response_category"]
+    )
 
-    binary_data = df_binary.sort_values(["variable", "community", "year"])
+    binary_data = df_binary.sort_values(["variable", "community", "year"]).copy()
+    binary_data["solution_name"] = binary_data["variable"].map(solution_label)
 
     joint_context = joint.copy()
     if {"GC", "TC"}.issubset(joint_context.columns):
         cols = ["year", "variable", "GC", "TC", "joint_acceptance"]
         joint_context = joint_context[cols].sort_values(["variable", "year"])
+        joint_context["solution_name"] = joint_context["variable"].map(solution_label)
 
-    return f"""
+    requested_years = {
+        int(value)
+        for value in re.findall(r"\b(?:19|20)\d{2}\b", user_question)
+    }
+    if requested_years:
+        raw_data = raw_data[raw_data["year"].isin(requested_years)]
+        binary_data = binary_data[binary_data["year"].isin(requested_years)]
+        if "year" in joint_context.columns:
+            joint_context = joint_context[joint_context["year"].isin(requested_years)]
+
+    question_lower = user_question.casefold()
+    joint_terms = [
+        "joint", "bicommunal", "common acceptance",
+        "κοινή αποδοχή", "κοινη αποδοχη", "δικοινοτική",
+        "ortak kabul", "iki toplum",
+    ]
+    distribution_terms = [
+        "against", "tolerate", "in favor", "full distribution",
+        "εναντίον", "ανέχομαι", "υπέρ",
+        "karşı", "tolere", "lehine",
+    ]
+    binary_terms = [
+        "accepted", "rejected", "acceptance", "rejection",
+        "αποδοχή", "απόρριψη", "αποδεκ",
+        "kabul", "redd",
+    ]
+
+    wants_joint = any(term in question_lower for term in joint_terms)
+    wants_distribution = any(term in question_lower for term in distribution_terms)
+    wants_binary = any(term in question_lower for term in binary_terms)
+
+    if wants_joint and not joint_context.empty:
+        maxima = []
+        for year_value, group in joint_context.groupby("year"):
+            leader = group.sort_values("joint_acceptance", ascending=False).iloc[0]
+            maxima.append(
+                f"{int(year_value)}: {leader['solution_name']} "
+                f"({leader['variable']}); GC={leader['GC']:.1f}%; "
+                f"TC={leader['TC']:.1f}%; "
+                f"joint=min(GC, TC)={leader['joint_acceptance']:.1f}%"
+            )
+        return f"""
+AUTHORITATIVE PRECOMPUTED MAXIMUM JOINT ACCEPTANCE:
+{chr(10).join(maxima)}
+
+JOINT ACCEPTANCE DATA:
+{joint_context.to_csv(index=False)}
+
+RULE: joint_acceptance is calculated in Python as min(GC, TC).
+Copy the displayed values exactly; do not recalculate or substitute values from another table.
+"""
+
+    if wants_distribution:
+        return f"""
 ORIGINAL THREE-CATEGORY DATA:
 {raw_data.to_csv(index=False)}
 
+RULE: in_favor, tolerate, and against are separate response categories.
+Copy percentages exactly from this table.
+"""
+
+    if wants_binary:
+        return f"""
+DERIVED ACCEPTED / REJECTED DATA:
+{binary_data.to_csv(index=False)}
+
+RULE: accepted = in_favor + tolerate; rejected = against.
+Copy percentages exactly from this table.
+"""
+
+    return f"""
 DERIVED ACCEPTED / REJECTED DATA:
 {binary_data.to_csv(index=False)}
 
 JOINT ACCEPTANCE DATA:
 {joint_context.to_csv(index=False)}
+
+RULES:
+- accepted = in_favor + tolerate
+- rejected = against
+- joint_acceptance = min(GC, TC)
+Copy percentages exactly from the supplied tables.
 """
 
 
@@ -839,7 +917,7 @@ if st.button(L["button"]):
     else:
         if answer_mode == L["data_only"]:
             openai_mode = "data_only"
-            data_context = build_ai_data_context()
+            data_context = build_ai_data_context(question)
         elif not st.secrets.get(OPENAI_VECTOR_STORE_SECRET, ""):
             st.error(L["missing"])
             st.stop()
@@ -848,7 +926,7 @@ if st.button(L["button"]):
             data_context = "No dataset supplied in this mode."
         else:
             openai_mode = "combined"
-            data_context = build_ai_data_context()
+            data_context = build_ai_data_context(question)
 
         with st.spinner("OpenAI is analysing the available data and indexed sources..."):
             try:
