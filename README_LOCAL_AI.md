@@ -1,7 +1,7 @@
 # Local AI experiment (Windows, 64 GB laptop)
 
 This branch adds an optional local Ollama backend to the existing Streamlit AI
-dashboard. The Gemini backend remains available and unchanged.
+dashboard. The cloud comparison backend now uses OpenAI File Search.
 
 ## Privacy
 
@@ -10,7 +10,7 @@ The PDFs and generated semantic index remain on the laptop. The folders
 papers, the book, the index, or `.streamlit/secrets.toml`.
 
 When **Local AI** is selected, questions, dashboard data, and retrieved passages
-are sent only to Ollama at `http://127.0.0.1:11434`. They are not sent to Gemini.
+are sent only to Ollama at `http://127.0.0.1:11434`. They are not sent to OpenAI.
 
 ## 1. Install the application
 
@@ -86,8 +86,8 @@ powershell -ExecutionPolicy Bypass -File .\start_local_ai.ps1
 ```
 
 In **Ask the data and theory**, select **Local AI** and choose one of the three
-existing answer modes. Gemini continues to require the existing Streamlit
-secrets; Local AI does not require an API key.
+existing answer modes. OpenAI requires `OPENAI_API_KEY` and
+`OPENAI_VECTOR_STORE_ID` in Streamlit secrets; Local AI does not require an API key.
 
 ## Benchmark evaluation
 
@@ -100,7 +100,29 @@ timing, token, answer, and source information are captured automatically.
 
 Evaluation records remain only in the current Streamlit browser session. Use
 **Download evaluation CSV** before closing the session. Run the same benchmark
-question with Local AI and Gemini to create directly comparable records.
+question with Local AI and OpenAI to create directly comparable records.
+
+## Optional OpenAI corpus index
+
+The cloud comparison uses a separate OpenAI vector store. It does not reuse or
+upload the SQLite/Ollama index. With the PDFs already under `private_corpus/`, run:
+
+```powershell
+$env:OPENAI_API_KEY = "your-key"
+python build_openai_index.py
+```
+
+The script uploads page-marked extracted text from all 45 papers and the
+searchable *Conflict and Change* PDF. Add the printed vector-store ID and API
+key to `.streamlit/secrets.toml`:
+
+```toml
+OPENAI_API_KEY = "your-key"
+OPENAI_VECTOR_STORE_ID = "vs_..."
+OPENAI_MODEL = "gpt-5-mini"
+```
+
+Do not commit the API key, PDFs, or `openai_index_manifest.json`.
 
 ## Optional model settings
 

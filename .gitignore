@@ -5,6 +5,7 @@ __pycache__/
 # Private and generated local-AI material. Never commit the PDFs or index.
 private_corpus/
 local_index/
+openai_index_manifest.json
 
 # Local Streamlit credentials.
 .streamlit/secrets.toml
